@@ -1,0 +1,50 @@
+Test Case ID,Module,Scenario,Test Data,Expected Result,Priority,Type,Catches flaw
+TC_LOGIN_01,Login,Valid login returns tokens,alice / Alice@123,"200; access + refresh token; token_type Bearer; expires_in 900",High,Positive,-
+TC_LOGIN_02,Login,Wrong password,bob / WrongPass@1,401 with generic message,High,Negative,V3
+TC_LOGIN_03,Login,Unknown user,random username,401 with generic message,High,Negative,V3
+TC_LOGIN_04,Login,No user enumeration,wrong password vs unknown user,Identical status and body,High,Security,V3
+TC_LOGIN_05,Login,Password is case-sensitive,bob / bob@123,401,Medium,Negative,-
+TC_LOGIN_06,Login,Missing username,password only,400,Medium,Negative,V5
+TC_LOGIN_07,Login,Missing password,username only,400,Medium,Negative,V5
+TC_LOGIN_08,Login,Empty username,""" / Alice@123",400,Medium,Negative,V5
+TC_LOGIN_09,Login,Empty password,"alice / """,400,Medium,Negative,V5
+TC_LOGIN_10,Login,Non-JSON body,form-style text,400; no stack trace,Medium,Negative,V5
+TC_LOGIN_11,Login,Wrong data types,username 12345 / password true,400,Medium,Negative,V5
+TC_LOGIN_12,Login,SQL injection: OR true,' OR '1'='1,401; no token,High,Security,-
+TC_LOGIN_13,Login,SQL injection: comment,admin'--,401; no token,High,Security,-
+TC_LOGIN_14,Login,SQL injection: DROP TABLE,' OR 1=1; DROP TABLE users;--,401; no token,High,Security,-
+TC_LOGIN_15,Login,Very long username,10000 characters,400 or 401; never 500,Medium,Negative,-
+TC_LOGIN_16,Login,Password not echoed,valid and invalid logins,Password absent from response,Medium,Security,-
+TC_LOGIN_17,Login,Wrong HTTP method,GET /auth/login,405,Low,Negative,-
+TC_LOGIN_18,Login,Tokens not cached,valid login,Cache-Control: no-store,Medium,Security,V10
+TC_LOGIN_19,Login,Account lockout,5 wrong passwords then correct one,423 Locked; no token,High,Security,V4
+TC_JWT_01,JWT structure,Three parts,access token,header.payload.signature,Medium,Positive,-
+TC_JWT_02,JWT structure,Header algorithm,access token,"alg HS256, typ JWT",Medium,Positive,-
+TC_JWT_03,JWT structure,Required claims,access token,"iss, aud, sub, role, type, iat, exp, jti present and correct",High,Positive,-
+TC_JWT_04,JWT structure,Token lifetime,access token,exp - iat = 900 seconds,Medium,Positive,-
+TC_JWT_05,JWT structure,No sensitive data in payload,access token,"No password, hash or secret",High,Security,V9
+TC_JWT_06,JWT structure,Unique token ID,two logins,Different jti,Low,Positive,-
+TC_NEG_01,JWT validation,Valid token accepted (control),alice token,200 + correct user,High,Positive,-
+TC_NEG_02,JWT validation,No Authorization header,-,401,High,Negative,-
+TC_NEG_03,JWT validation,Wrong auth scheme,Token <jwt>,401,Medium,Negative,-
+TC_NEG_04,JWT validation,Empty bearer token,Bearer (blank),401,Medium,Negative,-
+TC_NEG_05,JWT validation,Malformed tokens (4 variants),"not.a.jwt, abc123, a.b.c.d, ....",401,Medium,Negative,-
+TC_NEG_06,JWT validation,Tampered payload (role to admin),original signature kept,401,High,Security,V1
+TC_NEG_07,JWT validation,Tampered signature,last characters changed,401,High,Security,V1
+TC_NEG_08,JWT validation,Wrong signing secret,attacker secret,401,High,Security,V1
+TC_NEG_09,JWT validation,alg none attack,"alg: none, no signature",401,High,Security,V1
+TC_NEG_10,JWT validation,Expired token,valid signature; expired 1 hour ago,"401 ""Token expired""",High,Security,V2
+TC_NEG_11,JWT validation,Token without expiry,no exp claim,401,High,Security,V2
+TC_NEG_12,JWT validation,Wrong issuer,iss evil-issuer,401,Medium,Security,V2
+TC_NEG_13,JWT validation,Wrong audience,aud some-other-api,401,Medium,Security,V2
+TC_NEG_14,JWT validation,Token in query string,?token=<jwt>,401,Medium,Security,-
+TC_NEG_15,JWT validation,Token for nonexistent user,validly signed; sub ghost,401,Medium,Negative,-
+TC_AUTHZ_01,Authorization,Admin accesses admin endpoint,admin token,200; user list; no passwords,High,Positive,-
+TC_AUTHZ_02,Authorization,Normal user blocked from admin,alice token,403,High,Security,V8
+TC_AUTHZ_03,Authorization,No token on admin endpoint,-,401 (not 403),Medium,Negative,-
+TC_SESS_01,Session,Refresh gives new access token,refresh token,200; new token works,High,Positive,-
+TC_SESS_02,Session,Access token cannot refresh,access token at /auth/refresh,401,High,Security,V7
+TC_SESS_03,Session,Refresh token cannot access API,refresh token at /auth/me,401,High,Security,V7
+TC_SESS_04,Session,Token rejected after logout,logged-out token,401,High,Security,V6
+TC_SESS_05,Session,Logout without token,-,401,Low,Negative,-
+TC_SESS_06,Session,Logout ends only that session,two logins; log out one,Other token still works,Medium,Security,V6
